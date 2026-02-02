@@ -1,0 +1,13 @@
+{
+  "name": "kick",
+  "version": "1.0.0",
+  "description": "Minimal Typescript library for managing Kick.com Bot",
+  "main": "src/KickClient.ts",
+  "private": false,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
