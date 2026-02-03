@@ -1,9 +1,10 @@
 {
-  "name": "kick",
-  "version": "1.0.0",
+  "name": "@narzeky/kick",
+  "version": "1.1.0",
   "description": "Minimal Typescript library for managing Kick.com Bot",
   "main": "src/KickClient.ts",
   "private": false,
+  "author": "Tinnaphat Somsang <tinvv@outlook.co.th>",
   "devDependencies": {
     "@types/bun": "latest"
   },

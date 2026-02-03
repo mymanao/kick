@@ -17,7 +17,7 @@ export class KickClient {
   private readonly state: string;
   private pkceVerifier?: string;
   private tokenManager = new TokenManager(
-    (refreshToken: string) => OAuth.refreshToken(refreshToken, this.clientId)
+    (refreshToken: string) => OAuth.refreshToken(refreshToken, this.clientId, this.clientSecret)
   );
   private rest = new RestClient();
   public chat = new ChatClient(this.rest);
@@ -32,6 +32,15 @@ export class KickClient {
     this.state = options.state ?? crypto.randomBytes(16).toString("hex");
     this.webhooks = new WebhookRouter(options.webhookSecret ?? "");
     this.auth = new AuthManager(this);
+    this.tokenManager = new TokenManager(
+      (refreshToken) => OAuth.refreshToken(refreshToken, this.clientId, this.clientSecret),
+      options.auth?.onTokenUpdate
+    );
+
+    if (options.auth?.initialTokens) {
+      this.tokenManager.setTokens(options.auth.initialTokens);
+      this.rest.setTokenManager(this.tokenManager);
+    }
   }
 
   getAuthURL(): string {
@@ -76,7 +85,7 @@ export class KickClient {
   }
 
   async refreshToken(refreshToken: string): Promise<KickTokenResponse> {
-    return OAuth.refreshToken(refreshToken, this.clientId);
+    return OAuth.refreshToken(refreshToken, this.clientId, this.clientSecret);
   }
 
   createAuthCallbackServer(options?: { port?: number; path?: string }) {

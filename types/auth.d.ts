@@ -5,3 +5,8 @@ export interface KickTokenResponse {
   refresh_token: string;
   scope: string;
 }
+
+export interface KickAuthOptions {
+  initialTokens?: KickTokenResponse;
+  onTokenUpdate?: (tokens: KickTokenResponse) => void | Promise<void>;
+}

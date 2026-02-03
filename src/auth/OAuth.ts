@@ -31,12 +31,14 @@ export async function exchangeCode(
 
 export async function refreshToken(
   refreshToken: string,
-  clientId: string
+  clientId: string,
+  clientSecret: string
 ): Promise<KickTokenResponse> {
   const params = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: refreshToken,
     client_id: clientId,
+    client_secret: clientSecret,
   });
 
   const res = await fetch("https://id.kick.com/oauth/token", {
