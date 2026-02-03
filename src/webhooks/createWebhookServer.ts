@@ -10,7 +10,9 @@ export function createWebhookServer(
   const path = options.path ?? "/kick/webhook";
 
   const server = http.createServer(async (req, res) => {
-    if (req.method !== "POST" || req.url !== path) {
+    const url = new URL(req.url ?? "", `http://${req.headers.host}`);
+
+    if (req.method !== "POST" || url.pathname !== path) {
       res.statusCode = 404;
       res.end();
       return;
@@ -20,15 +22,23 @@ export function createWebhookServer(
     for await (const chunk of req) chunks.push(chunk);
     const rawBody = Buffer.concat(chunks).toString("utf8");
 
+    const headers: Record<string, string> = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (typeof value === "string") {
+        headers[key] = value;
+      }
+    }
+
     try {
       await router.handleRequest({
         rawBody,
-        headers: req.headers as Record<string, string>,
+        headers,
       });
 
       res.statusCode = 200;
       res.end();
     } catch (err) {
+      console.error("Webhook error:", err);
       res.statusCode = 401;
       res.end();
     }
@@ -37,9 +47,6 @@ export function createWebhookServer(
   server.listen(port, () => {
     console.log(
       `Kick webhook server listening on http://localhost:${port}${path}`
-    );
-    console.log(
-      "Expose this endpoint publicly and register it in the Kick dashboard."
     );
   });
 

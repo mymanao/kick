@@ -30,7 +30,10 @@ export class KickClient {
     this.redirectUri = options.redirectUri;
     this.scopes = options.scopes;
     this.state = options.state ?? crypto.randomBytes(16).toString("hex");
-    this.webhooks = new WebhookRouter(options.webhookSecret ?? "");
+    this.webhooks = new WebhookRouter(
+      options.clientSecret,
+      this.rest
+    );
     this.auth = new AuthManager(this);
     this.tokenManager = new TokenManager(
       (refreshToken) => OAuth.refreshToken(refreshToken, this.clientId, this.clientSecret),
