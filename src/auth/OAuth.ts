@@ -1,11 +1,11 @@
-import type {KickTokenResponse} from "../../types";
+import type { KickTokenResponse } from "../../types";
 
 export async function exchangeCode(
   code: string,
   verifier: string,
   clientId: string,
   clientSecret: string,
-  redirectUri: string
+  redirectUri: string,
 ): Promise<KickTokenResponse> {
   const params = new URLSearchParams({
     grant_type: "authorization_code",
@@ -18,7 +18,7 @@ export async function exchangeCode(
 
   const res = await fetch("https://id.kick.com/oauth/token", {
     method: "POST",
-    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
   });
 
@@ -32,7 +32,7 @@ export async function exchangeCode(
 export async function refreshToken(
   refreshToken: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ): Promise<KickTokenResponse> {
   const params = new URLSearchParams({
     grant_type: "refresh_token",
@@ -43,7 +43,7 @@ export async function refreshToken(
 
   const res = await fetch("https://id.kick.com/oauth/token", {
     method: "POST",
-    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
   });
 

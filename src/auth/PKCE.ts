@@ -1,12 +1,11 @@
-import crypto from "node:crypto";
-
 export function createPkce(): {
   verifier: string;
   challenge: string;
 } {
-  const verifier = crypto.randomBytes(32).toString("base64url");
-  const challenge = crypto
-    .createHash("sha256")
+  const verifier = Buffer.from(
+    crypto.getRandomValues(new Uint8Array(32)),
+  ).toString("base64url");
+  const challenge = new Bun.CryptoHasher("sha256")
     .update(verifier)
     .digest("base64url");
 

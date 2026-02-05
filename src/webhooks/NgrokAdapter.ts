@@ -1,3 +1,5 @@
+import { logger } from "../Logger.ts";
+
 type NgrokOptions = {
   port?: number;
   path?: string;
@@ -7,14 +9,14 @@ type NgrokOptions = {
   onUrl?: (url: string) => void;
 };
 
-export async function startNgrok(options: NgrokOptions = {}) {
+export async function ngrokAdapter(options: NgrokOptions = {}) {
   let ngrok: any;
 
   try {
     ngrok = await import("@ngrok/ngrok");
   } catch {
     throw new Error(
-      "@ngrok/ngrok is not installed. Install it with `npm install @ngrok/ngrok`."
+      "@ngrok/ngrok is not installed. Install it with `npm install @ngrok/ngrok`.",
     );
   }
 
@@ -33,9 +35,7 @@ export async function startNgrok(options: NgrokOptions = {}) {
 
   options.onUrl?.(fullUrl);
 
-  console.log("Ngrok tunnel ready");
-  console.log("Public webhook URL:");
-  console.log(fullUrl);
+  logger.success("Ngrok tunnel established", { fullUrl });
 
   return {
     url: fullUrl,

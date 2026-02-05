@@ -1,4 +1,4 @@
-import type {KickTokenResponse} from "../../types";
+import type { KickTokenResponse } from "../../types";
 
 type RefreshFn = (refreshToken: string) => Promise<KickTokenResponse>;
 type TokenUpdateCallback = (tokens: KickTokenResponse) => void | Promise<void>;
@@ -7,7 +7,7 @@ export class TokenManager {
   private accessToken?: string;
   private refreshToken?: string;
   private expiresAt?: number;
-  private onUpdate?: TokenUpdateCallback;
+  private readonly onUpdate?: TokenUpdateCallback;
 
   private readonly refreshFn: RefreshFn;
   private refreshThresholdMs = 60_000; // refresh 60s before expiry
@@ -20,14 +20,17 @@ export class TokenManager {
   setTokens(token: KickTokenResponse) {
     this.accessToken = token.access_token;
     this.refreshToken = token.refresh_token;
-    this.expiresAt = Date.now() + token.expires_in * 1000;
 
     this.onUpdate?.(token);
   }
 
   async getAccessToken(): Promise<string> {
-    if (!this.accessToken || !this.expiresAt) {
+    if (!this.accessToken) {
       throw new Error("TokenManager not initialized");
+    }
+
+    if (!this.expiresAt) {
+      return this.accessToken;
     }
 
     const now = Date.now();
@@ -36,7 +39,7 @@ export class TokenManager {
       await this.refresh();
     }
 
-    return this.accessToken!;
+    return this.accessToken;
   }
 
   private async refresh() {
@@ -46,9 +49,5 @@ export class TokenManager {
 
     const newToken = await this.refreshFn(this.refreshToken);
     this.setTokens(newToken);
-  }
-
-  isExpired(): boolean {
-    return !this.expiresAt || Date.now() >= this.expiresAt;
   }
 }

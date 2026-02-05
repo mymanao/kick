@@ -1,62 +1,41 @@
-# Kick SDK
-
-A **minimal, server-side JavaScript/TypeScript SDK** for building Kick bots using the **official Kick Dev API**.
-
-This SDK focuses on:
-- OAuth 2.1 (PKCE + client secret)
-- Automatic token refresh
-- Chat message sending
-- Webhook-based event handling (RSA-verified)
-- Low boilerplate, no framework lock-in
-
----
-
-## Features
-
-- OAuth 2.1 authorization (User Access Tokens)
-- Automatic access token refresh
-- Send chat messages as a bot
-- Receive chat events via Kick webhooks
-- RSA public-key webhook verification (official spec)
-- Built-in helpers to start OAuth callback and webhook servers
-- Works with Node.js 18+ (TypeScript or JavaScript)
+<p align="center">
+  <a href="https://github.com/tinarskii/manao">
+    <img src="https://raw.githubusercontent.com/tinarskii/manao/main/docs/manao.svg" height="64px" width="auto" />
+    <h2 align="center">@manaobot/kick</h2>
+  </a>
+  <p align="center">
+    Minimal, type-safe JavaScript SDK for building Kick.com bots.
+    Designed for Bun. Works anywhere.
+  </p>
+  <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;">
+    <img src="https://img.shields.io/npm/v/@manaobot/kick?color=00e701" alt="npm version">
+    <img src="https://img.shields.io/github/license/tinarskii/manao" />
+    <img src="https://img.shields.io/badge/Bun-%E2%9C%93-black?logo=bun" alt="Bun Compatible">
+    <a href="https://discord.gg/vkW7YMyYaf"><img src="https://img.shields.io/discord/964718161624715304" /></a>
+  </div>
+</p>
 
 ---
 
-## Requirements
+## ⚡ About
 
-- Node.js **18+**
-- A Kick developer application
-- A **server-side environment** (this SDK is not browser-only)
-- A publicly reachable HTTPS URL for webhooks (ngrok, tunnel, or server)
+`@manaobot/kick` is a lightweight TypeScript SDK for building Kick.com bots, tools, and automation.
+This library focuses on **OAuth**, **Webhooks**, and **REST APIs**, everything required to build production-grade Kick bots.
 
 ---
 
-## Installation
+## 📦 Installation
 
 ```bash
-npm install @narzeky/kick
-```
+bun add @manaobot/kick
+````
 
 ---
 
-## Create a Kick App
-
-1. Go to the Kick developer dashboard
-2. Create a new application
-3. Note your **Client ID** and **Client Secret**
-4. Set a redirect URL (e.g. `http://localhost:3000/callback`)
-5. Enable required scopes (e.g. `chat:write`)
-6. Configure webhook subscriptions for events you want (e.g. `chat.message.sent`)
-
----
-
-## Quick Start: Simple Bot
-
-### Full example
+## 🚀 Quick Start
 
 ```ts
-import { KickClient } from "@narzeky/kick";
+import { KickClient } from "@manaobot/kick";
 
 const kick = new KickClient({
   clientId: process.env.KICK_CLIENT_ID!,
@@ -65,140 +44,120 @@ const kick = new KickClient({
   scopes: ["chat:write"],
 });
 
-console.log(kick.getAuthURL());
+if (!process.env.KICK_REFRESH_TOKEN) {
+  console.log(kick.getAuthURL());
+  kick.auth.createCallbackServer({ port: 3000 });
+  await kick.auth.waitForAuthorization();
+}
 
-kick.auth.onAuthorized(async () => {
-  await kick.chat.send({ content: "Bot online 👋" });
+await kick.chat.send({
+  content: "Hello from Kick SDK!"
 });
-
-kick.webhooks.on("chat.message.sent", async (event) => {
-  if (event.data.content === "!ping") {
-    await kick.chat.send({ content: "pong 🏓" });
-  }
-});
-
-kick.auth.createCallbackServer({ port: 3000 });
-kick.webhooks.createServer({ port: 3000 });
 ```
 
 ---
 
-## OAuth Flow
+## ✨ Features
 
-1. Run your app
-2. Open the printed authorization URL in your browser
-3. Approve access on Kick
-4. Kick redirects to your callback URL
-5. Tokens are exchanged and stored in memory
-6. `onAuthorized` handlers are triggered
+### 🔐 Authentication
 
-Tokens are refreshed automatically when needed.
-
-> **Note**  
-> For production use, you should persist tokens (database, file, KV store) and restore them on startup.
+* OAuth2 Authorization Code Flow
+* Automatic token refresh
+* PKCE support
+* Built-in callback server
 
 ---
 
-## Webhooks
-
-Kick delivers events via HTTPS webhooks.
-
-This SDK:
-- Verifies signatures using Kick’s RSA public key
-- Routes events by `Kick-Event-Type`
-- Exposes a simple event-based API
-
-Example:
+### 🧩 Webhooks
 
 ```ts
 kick.webhooks.on("chat.message.sent", (event) => {
-  console.log(event.data.content);
+  console.log(event.content);
 });
 ```
 
-### Local development
+* Signature verification
+* ngrok integration
+* Event subscription helpers
 
-Kick cannot reach `localhost` directly.
+---
 
-For local testing, expose your server using a tunnel:
+### 💬 Chat
+
+```ts
+await kick.chat.send({ content: "Hello chat!" });
+```
+
+---
+
+### 🌐 REST APIs
+
+Available via:
+
+```ts
+kick.api.*
+```
+
+Currently supported:
+
+* Categories API
+* Users API
+* Channels API
+* Channel Rewards API
+* Moderation API
+* Livestreams API
+* KICKs Leaderboard API
+
+---
+
+## 📚 Examples
+
+The repository includes numbered examples:
+
+| Example                  | Description              |
+| ------------------------ | ------------------------ |
+| `01-authorize-bot`       | OAuth authorization      |
+| `02-webhook`             | Webhook handling         |
+| `03-ngrok`               | Public webhook tunneling |
+| `04-categories-api`      | Categories API           |
+| `05-users-api`           | Users API                |
+| `06-channels-api`        | Channels API             |
+| `07-channel-rewards-api` | Channel rewards          |
+| `08-basic-chat-bot`      | Full bot template        |
+
+Run examples with:
 
 ```bash
-ngrok http 3000
+bun example/08-basic-chat-bot
 ```
 
-Register the public URL in the Kick developer dashboard.
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome.
+
+If you want to help:
+
+* improve typings
+* add new API modules
+* write examples
+
+Join the Discord server:
+
+[https://discord.gg/vkW7YMyYaf](https://discord.gg/vkW7YMyYaf)
 
 ---
 
-## Built-in Helpers
+## 📜 License
 
-### OAuth callback server
-
-```ts
-kick.auth.createCallbackServer({
-  port: 3000,
-  path: "/callback",
-});
-```
-
-### Webhook server
-
-```ts
-kick.webhooks.createServer({
-  port: 3000,
-  path: "/kick/webhook",
-});
-```
-
-These helpers remove boilerplate but do not hide platform requirements.
-
-Advanced users can integrate with their own HTTP servers using
-`handleRequest()` and `exchangeCode()` directly.
+GPL-3.0 License
+See LICENSE file for details.
 
 ---
 
-## What This SDK Does NOT Do
+## ❤️ Part of the Manao Ecosystem
 
-- No WebSocket or IRC-style chat connections
-- No DOM scraping or private APIs
-- No browser-only support
-- No automatic tunnel creation
-- No moderation helpers (yet)
+This SDK powers the **ManaoBot** project:
 
-This SDK follows **Kick’s official API model**.
-
----
-
-## Supported Events
-
-Event names depend on what you subscribe to in the Kick dashboard, for example:
-
-- `chat.message.sent`
-- `channel.followed`
-- `stream.started`
-
-Events are passed through as-is from Kick.
-
----
-
-## Project Status
-
-- API coverage: **basic / bot-ready**
-- Stability: **usable for real bots**
-- Scope: intentionally small
-
-This project is designed to be a clean foundation, not a monolithic framework.
-
----
-
-## License
-
-MIT
-
----
-
-## Disclaimer
-
-This is an **unofficial** SDK and is not affiliated with or endorsed by Kick.
-
-Kick’s API and webhook formats may change; breaking changes will be addressed as needed.
+[https://github.com/tinarskii/manao](https://github.com/tinarskii/manao)

@@ -1,22 +1,66 @@
-import {verifyKickWebhookSignature} from "./verifyKickWebhook";
-import type {CreateServerOptions} from "../../types";
-import {createWebhookServer} from "./createWebhookServer.ts";
-import {startNgrok} from "./ngrok";
+import type { CreateServerOptions } from "../../types";
+import { webhookServer } from "./WebhookServer.ts";
+import { ngrokAdapter } from "./NgrokAdapter.ts";
+
+const KICK_PUBLIC_KEY_PEM = `
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq/+l1WnlRrGSolDMA+A8
+6rAhMbQGmQ2SapVcGM3zq8ANXjnhDWocMqfWcTd95btDydITa10kDvHzw9WQOqp2
+MZI7ZyrfzJuz5nhTPCiJwTwnEtWft7nV14BYRDHvlfqPUaZ+1KR4OCaO/wWIk/rQ
+L/TjY0M70gse8rlBkbo2a8rKhu69RQTRsoaf4DVhDPEeSeI5jVrRDGAMGL3cGuyY
+6CLKGdjVEM78g3JfYOvDU/RvfqD7L89TZ3iN94jrmWdGz34JNlEI5hqK8dd7C5EF
+BEbZ5jgB8s8ReQV8H+MkuffjdAj3ajDDX3DOJMIut1lBrUVD1AaSrGCKHooWoL2e
+twIDAQAB
+-----END PUBLIC KEY-----
+`.trim();
+
+export async function verifyKickWebhookSignature(params: {
+  messageId: string;
+  timestamp: string;
+  rawBody: string;
+  signature: string;
+}): Promise<boolean> {
+  const { messageId, timestamp, rawBody, signature } = params;
+  const payload = `${messageId}.${timestamp}.${rawBody}`;
+
+  const pemContents = KICK_PUBLIC_KEY_PEM.replace(
+    "-----BEGIN PUBLIC KEY-----",
+    "",
+  )
+    .replace("-----END PUBLIC KEY-----", "")
+    .replace(/\s+/g, "");
+
+  const binaryKey = Buffer.from(pemContents, "base64");
+
+  const publicKey = await crypto.subtle.importKey(
+    "spki",
+    binaryKey,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(payload);
+  const sigBuffer = Buffer.from(signature, "base64");
+
+  return await crypto.subtle.verify(
+    "RSASSA-PKCS1-v1_5",
+    publicKey,
+    sigBuffer,
+    data,
+  );
+}
 
 type Handler = (event: any, headers: Headers) => void | Promise<void>;
 
 export class WebhookRouter {
   private handlers = new Map<string, Set<Handler>>();
-  private callbackUrl?: string;
 
   constructor(
     private readonly secret: string,
-    private readonly rest: any
+    private readonly rest: any,
   ) {}
-
-  setCallbackUrl(url: string) {
-    this.callbackUrl = url;
-  }
 
   on(eventType: string, handler: Handler) {
     if (!this.handlers.has(eventType)) {
@@ -40,7 +84,7 @@ export class WebhookRouter {
       throw new Error("Missing required Kick webhook headers");
     }
 
-    const valid = verifyKickWebhookSignature({
+    const valid = await verifyKickWebhookSignature({
       messageId,
       timestamp,
       rawBody: params.rawBody,
@@ -62,7 +106,7 @@ export class WebhookRouter {
   }
 
   createServer(options: CreateServerOptions) {
-    return createWebhookServer(this, options);
+    return webhookServer(this, options);
   }
 
   async ngrok(options?: {
@@ -73,18 +117,14 @@ export class WebhookRouter {
     region?: string;
     onUrl?: (url: string) => void;
   }) {
-    const result = await startNgrok(options);
-    this.setCallbackUrl(result.url);
-    return result;
+    return await ngrokAdapter(options);
   }
 
-  async subscribe(options: {
-    events: { name: string; version?: number }[];
-  }) {
+  async subscribe(options: { events: { name: string; version?: number }[] }) {
     await this.rest.fetch("/public/v1/events/subscriptions", {
       method: "POST",
       body: JSON.stringify({
-        events: options.events.map(e => ({
+        events: options.events.map((e) => ({
           name: e.name,
           version: e.version ?? 1,
         })),
@@ -92,6 +132,4 @@ export class WebhookRouter {
       }),
     });
   }
-
-
 }

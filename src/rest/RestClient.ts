@@ -1,4 +1,4 @@
-import type {TokenManager} from "../auth/TokenManager.ts";
+import type { TokenManager } from "../auth/TokenManager.ts";
 
 export class RestClient {
   private tokenManager?: TokenManager;
@@ -23,7 +23,15 @@ export class RestClient {
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed, response status: ${response.status}`);
+      let suggestion = "";
+      if (response.status === 401) {
+        suggestion =
+          "Have you obtained access token or refreshed them? If so, make sure your scopes cover the requested endpoint.";
+      }
+
+      throw new Error(
+        `API request failed, response status: ${response.status}\n[SUGGESTION] ${suggestion}`,
+      );
     }
 
     return response.json() as Promise<T>;
