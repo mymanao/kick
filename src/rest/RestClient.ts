@@ -11,7 +11,16 @@ export class RestClient {
     if (!this.tokenManager) {
       throw new Error("TokenManager not set in RestClient");
     }
-    const accessToken = await this.tokenManager.getAccessToken();
+
+    return this.requestWithRetry<T>(endpoint, options, true);
+  }
+
+  private async requestWithRetry<T>(
+    endpoint: string,
+    options: RequestInit,
+    allowRetry: boolean,
+  ): Promise<T> {
+    const accessToken = await this.tokenManager!.getAccessToken();
 
     const response = await fetch(`https://api.kick.com${endpoint}`, {
       ...options,
@@ -22,11 +31,16 @@ export class RestClient {
       },
     });
 
+    if (response.status === 401 && allowRetry) {
+      await this.tokenManager!.forceRefresh();
+      return this.requestWithRetry<T>(endpoint, options, false);
+    }
+
     if (!response.ok) {
       let suggestion = "";
       if (response.status === 401) {
         suggestion =
-          "Have you obtained access token or refreshed them? If so, make sure your scopes cover the requested endpoint.";
+          "Token refresh failed or scopes are insufficient for this endpoint.";
       }
 
       throw new Error(

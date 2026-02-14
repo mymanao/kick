@@ -7,6 +7,7 @@ export class TokenManager {
   private accessToken?: string;
   private refreshToken?: string;
   private expiresAt?: number;
+  private refreshing?: Promise<void>;
   private readonly onUpdate?: TokenUpdateCallback;
 
   private readonly refreshFn: RefreshFn;
@@ -21,6 +22,12 @@ export class TokenManager {
     this.accessToken = token.access_token;
     this.refreshToken = token.refresh_token;
 
+    if (token.expires_in) {
+      this.expiresAt = Date.now() + token.expires_in * 1000;
+    } else {
+      this.expiresAt = Date.now();
+    }
+
     this.onUpdate?.(token);
   }
 
@@ -30,7 +37,7 @@ export class TokenManager {
     }
 
     if (!this.expiresAt) {
-      return this.accessToken;
+      this.expiresAt = Date.now();
     }
 
     const now = Date.now();
@@ -43,11 +50,27 @@ export class TokenManager {
   }
 
   private async refresh() {
-    if (!this.refreshToken) {
-      throw new Error("No refresh token available");
+    if (this.refreshing) {
+      return this.refreshing;
     }
 
-    const newToken = await this.refreshFn(this.refreshToken);
-    this.setTokens(newToken);
+    this.refreshing = (async () => {
+      if (!this.refreshToken) {
+        throw new Error("No refresh token available");
+      }
+
+      const newToken = await this.refreshFn(this.refreshToken);
+      this.setTokens(newToken);
+    })();
+
+    try {
+      await this.refreshing;
+    } finally {
+      this.refreshing = undefined;
+    }
+  }
+
+  async forceRefresh(): Promise<void> {
+    await this.refresh();
   }
 }
