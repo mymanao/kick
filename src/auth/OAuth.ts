@@ -51,5 +51,10 @@ export async function refreshToken(
     throw new Error(`Token refresh failed (${res.status})`);
   }
 
-  return res.json() as Promise<KickTokenResponse>;
+  const data = (await res.json()) as KickTokenResponse;
+  if (typeof data.expires_in === "number") {
+    data.expires_at = Date.now() + data.expires_in * 1000;
+  }
+
+  return data;
 }

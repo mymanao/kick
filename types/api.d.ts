@@ -1,3 +1,11 @@
+import { CategoriesAPI } from "../src/api/CategoriesAPI.ts";
+import { UsersAPI } from "../src/api/UsersAPI.ts";
+import { ChannelsAPI } from "../src/api/ChannelsAPI.ts";
+import { ChannelRewardsAPI } from "../src/api/ChannelRewardsAPI.ts";
+import { LivestreamsAPI } from "../src/api/LivestreamsAPI.ts";
+import { ModerationAPI } from "../src/api/ModerationAPI.ts";
+import { KicksAPI } from "../src/api/KicksAPI.ts";
+
 /**
  * @type GetCategoriesParams
  * @property {number?} [cursor] - The cursor for pagination. (Minimum: 4, Maximum: 28)
@@ -156,3 +164,13 @@ export type KickLeaderboardResponse = {
   };
   message: string;
 };
+
+export interface KickAPIClient {
+  categories: CategoriesAPI;
+  users: UsersAPI;
+  channels: ChannelsAPI;
+  rewards: ChannelRewardsAPI;
+  livestreams: LivestreamsAPI;
+  moderation: ModerationAPI;
+  kicks: KicksAPI;
+}

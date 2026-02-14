@@ -12,6 +12,7 @@
  * @property {string} refresh_token - The refresh token used to obtain new access tokens.
  * @property {string} [token_type] - (Optional) The type of the token, typically "Bearer".
  * @property {number} [expires_in] - (Optional) The duration in seconds until the access token expires.
+ * @property {number} [expires_at] - (Optional) The timestamp (in milliseconds) when the access token expires.
  * @property {string} [scope] - (Optional) The scopes granted to the access token.
  */
 export interface KickTokenResponse {
@@ -19,6 +20,7 @@ export interface KickTokenResponse {
   refresh_token: string;
   token_type?: string;
   expires_in?: number;
+  expires_at?: number;
   scope?: string;
 }
 

@@ -21,12 +21,7 @@ export class TokenManager {
   setTokens(token: KickTokenResponse) {
     this.accessToken = token.access_token;
     this.refreshToken = token.refresh_token;
-
-    if (token.expires_in) {
-      this.expiresAt = Date.now() + token.expires_in * 1000;
-    } else {
-      this.expiresAt = Date.now();
-    }
+    this.expiresAt = token.expires_at;
 
     this.onUpdate?.(token);
   }

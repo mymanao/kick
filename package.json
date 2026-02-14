@@ -1,6 +1,6 @@
 {
   "name": "@manaobot/kick",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Minimal Typescript library for managing Kick.com bot",
   "main": "src/KickClient.ts",
   "private": false,
