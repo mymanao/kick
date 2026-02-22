@@ -26,7 +26,10 @@ export async function exchangeCode(
     throw new Error(`Code exchange failed (${res.status})`);
   }
 
-  return res.json() as Promise<KickTokenResponse>;
+  const data = (await res.json()) as KickTokenResponse;
+  data.expires_at = Date.now() + data.expires_in * 1000;
+
+  return data;
 }
 
 export async function refreshToken(
@@ -52,9 +55,7 @@ export async function refreshToken(
   }
 
   const data = (await res.json()) as KickTokenResponse;
-  if (typeof data.expires_in === "number") {
-    data.expires_at = Date.now() + data.expires_in * 1000;
-  }
+  data.expires_at = Date.now() + data.expires_in * 1000;
 
   return data;
 }
